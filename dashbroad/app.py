@@ -206,19 +206,25 @@ streamlit run dashboard/app.py
 # ══════════════════════════════════════════════
 @st.cache_data(ttl=300)   # refresh every 5 minutes = "real-time"
 def load_all():
+    def safe(fn, *args, default=None, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            return default if default is not None else pd.DataFrame()
+
     return {
-        'kpis':       get_kpis(),
-        'monthly':    get_monthly_revenue(),
-        'categories': get_category_summary(),
-        'cities':     get_city_performance(15),
-        'payments':   get_payment_summary(),
-        'top_prods':  get_top_products(10),
-        'recent':     get_recent_orders(20),
-        'ab_summary': get_ab_summary(),
-        'rfm_raw':    compute_rfm(),
-        'forecast':   forecast_revenue(3),
-        'ab_tests':   run_all_ab_tests(),
-        'cohort':     compute_cohort_retention(),
+        'kpis':       safe(get_kpis, default={}),
+        'monthly':    safe(get_monthly_revenue),
+        'categories': safe(get_category_summary),
+        'cities':     safe(get_city_performance, 15),
+        'payments':   safe(get_payment_summary),
+        'top_prods':  safe(get_top_products, 10),
+        'recent':     safe(get_recent_orders, 20),
+        'ab_summary': safe(get_ab_summary),
+        'rfm_raw':    safe(compute_rfm),
+        'forecast':   safe(forecast_revenue, 3),
+        'ab_tests':   safe(run_all_ab_tests, default=[]),
+        'cohort':     safe(compute_cohort_retention),
     }
 
 D = load_all()
