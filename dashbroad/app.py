@@ -185,25 +185,20 @@ with st.sidebar:
     st.caption("Source: FakeStore API + SQLite\nIndia FY 2024–25 · 50K orders")
 
 # ══════════════════════════════════════════════
-# GUARD: DB NOT READY
+# GUARD: DB NOT READY — auto-run pipeline
 # ══════════════════════════════════════════════
 if not db_ready:
-    st.title("🛒 ShopIQ — Setup Required")
-    st.warning("Database not found. Run the pipeline to get started.")
-    st.code("""
-# Step 1 — Install dependencies
-pip install -r requirements.txt
-
-# Step 2 — Fetch data from FakeStore API + generate orders
-python pipeline/fetch.py
-
-# Step 3 — Load into SQLite
-python pipeline/load.py
-
-# Step 4 — Launch dashboard
-streamlit run dashboard/app.py
-    """, language="bash")
-    st.stop()
+    st.info("⚙️ First run detected — initialising database...")
+    try:
+        from pipeline.fetch import run as fetch_run
+        from pipeline.load  import run as load_run
+        fetch_run()
+        load_run()
+        st.success("✅ Pipeline complete! Reloading...")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Pipeline failed: {e}")
+        st.stop()
 
 # ══════════════════════════════════════════════
 # LOAD DATA (CACHED)
@@ -245,9 +240,9 @@ if section == "💰 Revenue & Orders":
     c1,c2,c3,c4,c5 = st.columns(5)
     with c1: kpi("Total Revenue",   fmt(k.get('total_revenue',0)), f"{k.get('revenue_growth',0):+.1f}% vs prev period","up",  "GMV")
     with c2: kpi("Total Orders",    f"{int(k.get('total_orders',0)):,}", f"{k.get('orders_growth',0):+.1f}% growth","up",     "Transactions")
-    with c3: kpi("Avg Order Value", f"₹{k.get('avg_order_value',0):,.0f}", "vs ₹913 last year","up", "Per order")
-    with c4: kpi("Return Rate",     f"{k.get('return_rate',0):.1f}%", "↑ 1.2pp (worse)","down", "Of all orders")
-    with c5: kpi("Customers",       f"{int(k.get('unique_customers',0)):,}", "Active buyers","flat","Unique")
+    with c3: kpi("Avg Order Value", f"₹{float(k.get('avg_order_value') or 0):,.0f}", "vs ₹913 last year","up", "Per order")
+    with c4: kpi("Return Rate",     f"{float(k.get('return_rate') or 0):.1f}%", "↑ 1.2pp (worse)","down", "Of all orders")
+    with c5: kpi("Customers",       f"{int(k.get('unique_customers') or 0):,}", "Active buyers","flat","Unique")
 
     st.markdown("<br>", unsafe_allow_html=True)
     sql_badge("vw_monthly_revenue")
