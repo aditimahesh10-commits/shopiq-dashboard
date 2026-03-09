@@ -304,8 +304,8 @@ def run():
     conn = get_connection()
     create_schema(conn)
     load_products(conn, products_df)
+    load_customers(conn, orders_df)   # must load BEFORE fact_orders (FK constraint)
     load_orders(conn, orders_df)
-    load_customers(conn, orders_df)
     results = verify(conn)
     conn.close()
 
