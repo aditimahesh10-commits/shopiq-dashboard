@@ -185,20 +185,30 @@ with st.sidebar:
     st.caption("Source: FakeStore API + SQLite\nIndia FY 2024–25 · 50K orders")
 
 # ══════════════════════════════════════════════
-# GUARD: DB NOT READY — auto-run pipeline
+# GUARD: auto-run pipeline if DB is empty
 # ══════════════════════════════════════════════
-if not db_ready:
-    st.info("⚙️ First run detected — initialising database...")
+def db_is_empty():
     try:
-        from pipeline.fetch import run as fetch_run
-        from pipeline.load  import run as load_run
-        fetch_run()
-        load_run()
-        st.success("✅ Pipeline complete! Reloading...")
-        st.rerun()
-    except Exception as e:
-        st.error(f"Pipeline failed: {e}")
-        st.stop()
+        import sqlite3 as _sq
+        c = _sq.connect(db_path)
+        count = c.execute("SELECT COUNT(*) FROM fact_orders").fetchone()[0]
+        c.close()
+        return count == 0
+    except:
+        return True
+
+if not db_ready or db_is_empty():
+    with st.spinner("⚙️ Initialising database — please wait (~30 seconds)..."):
+        try:
+            from pipeline.fetch import run as fetch_run
+            from pipeline.load  import run as load_run
+            fetch_run()
+            load_run()
+            st.success("✅ Pipeline complete! Loading dashboard...")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Pipeline failed: {e}")
+            st.stop()
 
 # ══════════════════════════════════════════════
 # LOAD DATA (CACHED)
