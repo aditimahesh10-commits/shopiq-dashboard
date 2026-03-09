@@ -76,10 +76,14 @@ COLORS = dict(blue='#1a6cff', green='#12a05c', red='#e03535',
 CAT_COLORS = ['#1a6cff','#7c3aed','#12a05c','#e879a0','#e07c1a','#0891b2']
 
 def fmt(v):
-    if v >= 1e7: return f"₹{v/1e7:.2f} Cr"
-    if v >= 1e5: return f"₹{v/1e5:.1f}L"
-    if v >= 1e3: return f"₹{v/1e3:.1f}K"
-    return f"₹{int(v)}"
+    try:
+        v = float(v)
+        if v >= 1e7: return f"₹{v/1e7:.2f} Cr"
+        if v >= 1e5: return f"₹{v/1e5:.1f}L"
+        if v >= 1e3: return f"₹{v/1e3:.1f}K"
+        return f"₹{int(v)}"
+    except (TypeError, ValueError):
+        return "₹0"
 
 def kpi(label, value, trend, trend_dir="up", sub=""):
     css = {"up":"up","down":"down","flat":"flat"}.get(trend_dir,"flat")
@@ -248,61 +252,76 @@ if section == "💰 Revenue & Orders":
     st.markdown("<br>", unsafe_allow_html=True)
     sql_badge("vw_monthly_revenue")
 
+    monthly = D['monthly']
     col1, col2 = st.columns([1.5,1])
     with col1:
-        monthly = D['monthly']
-        monthly['label'] = pd.to_datetime(monthly['month']).dt.strftime('%b %Y')
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=monthly['label'], y=monthly['total_revenue']/1e5,
-            name='Revenue (₹L)', marker_color=COLORS['blue']+'bb',
-            marker_line_color=COLORS['blue'], marker_line_width=1.5))
-        fig.add_trace(go.Scatter(x=monthly['label'], y=monthly['avg_order_value'],
-            name='AOV (₹)', yaxis='y2', line=dict(color=COLORS['orange'], width=2),
-            mode='lines+markers', marker=dict(size=5)))
-        fig.update_layout(
-            yaxis=dict(title='Revenue (₹L)', tickprefix='₹', ticksuffix='L'),
-            yaxis2=dict(title='AOV (₹)', overlaying='y', side='right',
-                        tickprefix='₹', showgrid=False),
-        )
-        lay(fig, 320, "Monthly Revenue vs AOV")
-        st.plotly_chart(fig, use_container_width=True, config=pcfg())
+        if monthly is None or monthly.empty:
+            st.info('No monthly data available. Re-run the pipeline.')
+        else:
+            monthly['label'] = pd.to_datetime(monthly['month']).dt.strftime('%b %Y')
+            fig = go.Figure()
+            fig.add_trace(go.Bar(x=monthly['label'], y=monthly['total_revenue']/1e5,
+                name='Revenue (₹L)', marker_color=COLORS['blue']+'bb',
+                marker_line_color=COLORS['blue'], marker_line_width=1.5))
+            fig.add_trace(go.Scatter(x=monthly['label'], y=monthly['avg_order_value'],
+                name='AOV (₹)', yaxis='y2', line=dict(color=COLORS['orange'], width=2),
+                mode='lines+markers', marker=dict(size=5)))
+            fig.update_layout(
+                yaxis=dict(title='Revenue (₹L)', tickprefix='₹', ticksuffix='L'),
+                yaxis2=dict(title='AOV (₹)', overlaying='y', side='right',
+                            tickprefix='₹', showgrid=False),
+            )
+            lay(fig, 320, "Monthly Revenue vs AOV")
+            st.plotly_chart(fig, use_container_width=True, config=pcfg())
 
     with col2:
         cats = D['categories']
-        fig2 = px.pie(cats, values='total_revenue', names='category',
-            title='Revenue by Category', hole=0.55,
-            color_discrete_sequence=CAT_COLORS)
-        fig2.update_traces(textposition='outside', textinfo='label+percent')
-        lay(fig2, 320)
-        st.plotly_chart(fig2, use_container_width=True, config=pcfg())
+        if cats is None or cats.empty:
+            st.info('No category data available.')
+        else:
+            fig2 = px.pie(cats, values='total_revenue', names='category',
+                title='Revenue by Category', hole=0.55,
+                color_discrete_sequence=CAT_COLORS)
+            fig2.update_traces(textposition='outside', textinfo='label+percent')
+            lay(fig2, 320)
+            st.plotly_chart(fig2, use_container_width=True, config=pcfg())
 
     col3, col4 = st.columns(2)
     with col3:
         pay = D['payments']
-        fig3 = px.bar(pay.sort_values('total_revenue'), x='total_revenue', y='payment_method',
-            orientation='h', title='Revenue by Payment Method', text='pct_of_orders',
-            color='total_revenue', color_continuous_scale=['#eef3ff','#1a6cff'])
-        fig3.update_traces(texttemplate='%{text}% of orders', textposition='outside')
-        fig3.update_xaxes(tickprefix='₹', tickformat='.2s')
-        fig3.update_layout(coloraxis_showscale=False)
-        lay(fig3, 280)
-        st.plotly_chart(fig3, use_container_width=True, config=pcfg())
+        if pay is None or pay.empty:
+            st.info('No payment data available.')
+        else:
+            fig3 = px.bar(pay.sort_values('total_revenue'), x='total_revenue', y='payment_method',
+                orientation='h', title='Revenue by Payment Method', text='pct_of_orders',
+                color='total_revenue', color_continuous_scale=['#eef3ff','#1a6cff'])
+            fig3.update_traces(texttemplate='%{text}% of orders', textposition='outside')
+            fig3.update_xaxes(tickprefix='₹', tickformat='.2s')
+            fig3.update_layout(coloraxis_showscale=False)
+            lay(fig3, 280)
+            st.plotly_chart(fig3, use_container_width=True, config=pcfg())
 
     with col4:
-        monthly['return_rate'] = monthly['return_rate'].fillna(0)
-        fig4 = px.line(monthly, x='label', y='return_rate',
-            title='Monthly Return Rate (%)', markers=True,
-            color_discrete_sequence=[COLORS['red']])
-        fig4.update_traces(fill='tozeroy', fillcolor=COLORS['red']+'15', line_width=2.5)
-        fig4.update_yaxes(ticksuffix='%')
-        lay(fig4, 280)
-        st.plotly_chart(fig4, use_container_width=True, config=pcfg())
+        if monthly is None or monthly.empty:
+            st.info('No return rate data available.')
+        else:
+            monthly['return_rate'] = monthly['return_rate'].fillna(0)
+            fig4 = px.line(monthly, x='label', y='return_rate',
+                title='Monthly Return Rate (%)', markers=True,
+                color_discrete_sequence=[COLORS['red']])
+            fig4.update_traces(fill='tozeroy', fillcolor=COLORS['red']+'15', line_width=2.5)
+            fig4.update_yaxes(ticksuffix='%')
+            lay(fig4, 280)
+            st.plotly_chart(fig4, use_container_width=True, config=pcfg())
 
     st.markdown("### 📋 Recent Orders")
     sql_badge("fact_orders")
     recent = D['recent']
-    recent['amount'] = recent['amount'].apply(lambda x: f"₹{int(x):,}")
-    st.dataframe(recent, use_container_width=True, hide_index=True)
+    if recent is not None and not recent.empty and 'amount' in recent.columns:
+        recent['amount'] = recent['amount'].apply(lambda x: f"₹{int(x):,}")
+        st.dataframe(recent, use_container_width=True, hide_index=True)
+    else:
+        st.info('No recent orders available.')
 
 # ══════════════════════════════════════════════
 # ── SECTION 2: CUSTOMERS ──
