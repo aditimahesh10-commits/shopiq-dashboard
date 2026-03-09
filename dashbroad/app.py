@@ -266,8 +266,7 @@ if section == "💰 Revenue & Orders":
             monthly['label'] = pd.to_datetime(monthly['month']).dt.strftime('%b %Y')
             fig = go.Figure()
             fig.add_trace(go.Bar(x=monthly['label'], y=monthly['total_revenue']/1e5,
-                name='Revenue (₹L)', marker_color=COLORS['blue']+'bb',
-                marker_line_color=COLORS['blue'], marker_line_width=1.5))
+                name='Revenue (₹L)', marker_color=COLORS['blue']+'bb'))
             fig.add_trace(go.Scatter(x=monthly['label'], y=monthly['avg_order_value'],
                 name='AOV (₹)', yaxis='y2', line=dict(color=COLORS['orange'], width=2),
                 mode='lines+markers', marker=dict(size=5)))
