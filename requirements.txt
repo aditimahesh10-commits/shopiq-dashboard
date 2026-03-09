@@ -3,6 +3,6 @@ pandas
 numpy
 scipy
 statsmodels
-plotly
+plotly==5.18.0
 requests
 scikit-learn
