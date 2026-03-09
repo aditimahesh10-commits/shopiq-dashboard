@@ -211,24 +211,31 @@ if not db_ready or db_is_empty():
             st.stop()
 
 # ══════════════════════════════════════════════
-# LOAD DATA (CACHED)
+# LOAD DATA (CACHED — filter-aware)
 # ══════════════════════════════════════════════
-@st.cache_data(ttl=300)   # refresh every 5 minutes = "real-time"
-def load_all():
+@st.cache_data(ttl=300)
+def load_all(date_from_str, date_to_str, cats, cities, status):
     def safe(fn, *args, default=None, **kwargs):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
             return default if default is not None else pd.DataFrame()
 
+    # Pass date filters to KPIs
+    kpis = safe(get_kpis, date_from_str, date_to_str, default={})
+
     return {
-        'kpis':       safe(get_kpis, default={}),
+        'kpis':       kpis,
         'monthly':    safe(get_monthly_revenue),
         'categories': safe(get_category_summary),
         'cities':     safe(get_city_performance, 15),
         'payments':   safe(get_payment_summary),
         'top_prods':  safe(get_top_products, 10),
-        'recent':     safe(get_recent_orders, 20),
+        'recent':     safe(get_filtered_orders,
+                          date_from=date_from_str, date_to=date_to_str,
+                          categories=cats if cats else None,
+                          cities=cities if cities else None,
+                          status=status if status != 'All' else None),
         'ab_summary': safe(get_ab_summary),
         'rfm_raw':    safe(compute_rfm),
         'forecast':   safe(forecast_revenue, 3),
@@ -236,7 +243,10 @@ def load_all():
         'cohort':     safe(compute_cohort_retention),
     }
 
-D = load_all()
+D = load_all(
+    str(date_from), str(date_to),
+    sel_cats, sel_cities, sel_status
+)
 
 # ══════════════════════════════════════════════
 # ── SECTION 1: REVENUE ──
@@ -318,14 +328,16 @@ if section == "💰 Revenue & Orders":
             lay(fig4, 280)
             st.plotly_chart(fig4, use_container_width=True, config=pcfg())
 
-    st.markdown("### 📋 Recent Orders")
+    st.markdown("### 📋 Filtered Orders")
     sql_badge("fact_orders")
     recent = D['recent']
     if recent is not None and not recent.empty and 'amount' in recent.columns:
-        recent['amount'] = recent['amount'].apply(lambda x: f"₹{int(x):,}")
-        st.dataframe(recent, use_container_width=True, hide_index=True)
+        st.caption(f"Showing {len(recent):,} orders matching your filters")
+        recent_disp = recent.copy()
+        recent_disp['amount'] = recent_disp['amount'].apply(lambda x: f"₹{int(x):,}")
+        st.dataframe(recent_disp, use_container_width=True, hide_index=True)
     else:
-        st.info('No recent orders available.')
+        st.info('No orders found for the selected filters.')
 
 # ══════════════════════════════════════════════
 # ── SECTION 2: CUSTOMERS ──
