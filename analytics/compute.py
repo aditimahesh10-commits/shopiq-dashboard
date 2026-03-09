@@ -78,10 +78,10 @@ def get_kpis(date_from: str = None, date_to: str = None) -> dict:
             FROM fact_orders
             WHERE date < (SELECT MIN(date) FROM (SELECT date FROM fact_orders ORDER BY date DESC LIMIT 25000))
         """)
-        row['prev_revenue'] = prev['prev_revenue'].iloc[0] or 1
-        row['prev_orders']  = prev['prev_orders'].iloc[0]  or 1
-        row['revenue_growth'] = round((row['total_revenue'] - row['prev_revenue']) / row['prev_revenue'] * 100, 1)
-        row['orders_growth']  = round((row['total_orders']  - row['prev_orders'])  / row['prev_orders']  * 100, 1)
+        row['prev_revenue'] = prev['prev_revenue'].iloc[0] or 0
+        row['prev_orders']  = prev['prev_orders'].iloc[0]  or 0
+        row['revenue_growth'] = round((row['total_revenue'] - row['prev_revenue']) / row['prev_revenue'] * 100, 1) if row['prev_revenue'] and row['prev_revenue'] != 0 else 0
+        row['orders_growth']  = round((row['total_orders']  - row['prev_orders'])  / row['prev_orders']  * 100, 1) if row['prev_orders']  and row['prev_orders']  != 0 else 0
     return row
 
 
@@ -233,7 +233,7 @@ def run_ab_test(metric: str = 'amount') -> dict:
     cohens_d   = (group_a.mean() - group_b.mean()) / pooled_std if pooled_std > 0 else 0
 
     # Relative lift
-    lift = (group_b.mean() - group_a.mean()) / group_a.mean() * 100
+    lift = (group_b.mean() - group_a.mean()) / group_a.mean() * 100 if group_a.mean() != 0 else 0
 
     result = {
         'metric':          metric,
