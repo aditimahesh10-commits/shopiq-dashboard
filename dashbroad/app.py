@@ -266,7 +266,7 @@ if section == "💰 Revenue & Orders":
             monthly['label'] = pd.to_datetime(monthly['month']).dt.strftime('%b %Y')
             fig = go.Figure()
             fig.add_trace(go.Bar(x=monthly['label'], y=monthly['total_revenue']/1e5,
-                name='Revenue (₹L)', marker_color=COLORS['blue']+'bb'))
+                name='Revenue (₹L)', marker_color=COLORS['blue']))
             fig.add_trace(go.Scatter(x=monthly['label'], y=monthly['avg_order_value'],
                 name='AOV (₹)', yaxis='y2', line=dict(color=COLORS['orange'], width=2),
                 mode='lines+markers', marker=dict(size=5)))
@@ -313,7 +313,7 @@ if section == "💰 Revenue & Orders":
             fig4 = px.line(monthly, x='label', y='return_rate',
                 title='Monthly Return Rate (%)', markers=True,
                 color_discrete_sequence=[COLORS['red']])
-            fig4.update_traces(fill='tozeroy', fillcolor=COLORS['red']+'15', line_width=2.5)
+            fig4.update_traces(fill='tozeroy', fillcolor=COLORS['red'], line_width=2.5)
             fig4.update_yaxes(ticksuffix='%')
             lay(fig4, 280)
             st.plotly_chart(fig4, use_container_width=True, config=pcfg())
@@ -594,7 +594,7 @@ elif section == "📈 Forecasting":
     # Actuals bar
     fig.add_trace(go.Bar(
         x=actuals['month'], y=actuals['total_revenue']/1e5,
-        name='Actual Revenue', marker_color=COLORS['blue']+'bb'))
+        name='Actual Revenue', marker_color=COLORS['blue']))
 
     # Forecast line
     all_months = fc['month'].tolist()
@@ -610,7 +610,7 @@ elif section == "📈 Forecasting":
             x=forecasts['month'].tolist() + forecasts['month'].tolist()[::-1],
             y=[v/1e5 for v in forecasts['ci_upper'].tolist()] +
               [v/1e5 for v in forecasts['ci_lower'].tolist()[::-1]],
-            fill='toself', fillcolor=COLORS['orange']+'22',
+            fill='toself', fillcolor=COLORS['orange'],
             line=dict(color='rgba(0,0,0,0)'),
             name='95% Confidence Interval'))
 
