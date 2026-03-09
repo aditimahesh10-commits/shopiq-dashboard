@@ -703,7 +703,7 @@ elif section == "🧪 A/B Testing":
             x_range = np.linspace(mean - 3*std, mean + 3*std, 200)
             y_vals  = (1/(std * np.sqrt(2*np.pi))) * np.exp(-0.5 * ((x_range - mean)/std)**2)
             fig.add_trace(go.Scatter(x=x_range, y=y_vals, name=grp,
-                fill='tozeroy', fillcolor=color+'22', line=dict(color=color, width=2)))
+                fill='tozeroy', fillcolor=color, line=dict(color=color, width=2)))
         lay(fig, 280, f"Distribution Comparison — {metric}")
         st.plotly_chart(fig, use_container_width=True, config=pcfg())
 
