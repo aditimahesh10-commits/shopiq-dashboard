@@ -309,8 +309,8 @@ if section == "💰 Revenue & Orders":
         if monthly is None or monthly.empty:
             st.info('No return rate data available.')
         else:
-            monthly['return_rate'] = monthly['return_rate'].fillna(0)
-            fig4 = px.line(monthly, x='label', y='return_rate',
+            monthly['return_rate_pct'] = monthly['return_rate_pct'].fillna(0)
+            fig4 = px.line(monthly, x='label', y='return_rate_pct',
                 title='Monthly Return Rate (%)', markers=True,
                 color_discrete_sequence=[COLORS['red']])
             fig4.update_traces(fill='tozeroy', fillcolor=COLORS['red'], line_width=2.5)
