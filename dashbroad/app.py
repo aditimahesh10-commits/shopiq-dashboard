@@ -237,13 +237,13 @@ if section == "💰 Revenue & Orders":
     with c1: st.markdown("## 💰 Revenue & Orders")
     with c2: live_badge()
 
-    k = D['kpis']
+    k = D['kpis'] if D['kpis'] else {}
     c1,c2,c3,c4,c5 = st.columns(5)
-    with c1: kpi("Total Revenue",   fmt(k['total_revenue']), f"{k.get('revenue_growth',0):+.1f}% vs prev period","up",  "GMV")
-    with c2: kpi("Total Orders",    f"{int(k['total_orders']):,}", f"{k.get('orders_growth',0):+.1f}% growth","up",     "Transactions")
-    with c3: kpi("Avg Order Value", f"₹{k['avg_order_value']:,.0f}", "vs ₹913 last year","up", "Per order")
-    with c4: kpi("Return Rate",     f"{k['return_rate']:.1f}%", "↑ 1.2pp (worse)","down", "Of all orders")
-    with c5: kpi("Customers",       f"{int(k['unique_customers']):,}", "Active buyers","flat","Unique")
+    with c1: kpi("Total Revenue",   fmt(k.get('total_revenue',0)), f"{k.get('revenue_growth',0):+.1f}% vs prev period","up",  "GMV")
+    with c2: kpi("Total Orders",    f"{int(k.get('total_orders',0)):,}", f"{k.get('orders_growth',0):+.1f}% growth","up",     "Transactions")
+    with c3: kpi("Avg Order Value", f"₹{k.get('avg_order_value',0):,.0f}", "vs ₹913 last year","up", "Per order")
+    with c4: kpi("Return Rate",     f"{k.get('return_rate',0):.1f}%", "↑ 1.2pp (worse)","down", "Of all orders")
+    with c5: kpi("Customers",       f"{int(k.get('unique_customers',0)):,}", "Active buyers","flat","Unique")
 
     st.markdown("<br>", unsafe_allow_html=True)
     sql_badge("vw_monthly_revenue")
